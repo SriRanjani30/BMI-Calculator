@@ -13,21 +13,23 @@
             align-items: center;
             height: 100vh;
             margin: 0;
+            transition: background-color 0.3s;
         }
         .container {
             background-color: #fff;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 320px;
+            width: 350px;
             text-align: center;
+            transition: background-color 0.3s, color 0.3s;
         }
         h2 {
             color: #333;
             margin-bottom: 20px;
         }
         input[type="number"], select {
-            width: 100%;
+            width: 80%;
             padding: 10px;
             margin: 10px 0;
             border-radius: 5px;
@@ -48,15 +50,10 @@
         .btn:hover {
             background-color: #0056b3;
         }
-        .result {
+        .result, .quote, .tip {
             margin-top: 20px;
             font-size: 18px;
             color: #333;
-        }
-        .tip {
-            margin-top: 15px;
-            font-size: 14px;
-            color: #666;
         }
         .reset-btn {
             margin-top: 10px;
@@ -77,11 +74,20 @@
             font-size: 12px;
             color: #999;
         }
+        .theme-switcher {
+            margin-top: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #007bff;
+            transition: color 0.3s ease;
+        }
+        .theme-switcher:hover {
+            color: #0056b3;
+        }
     </style>
 </head>
 <body>
-
-<div class="container">
+<div class="container" id="container">
     <h2>BMI Calculator</h2>
     <select id="gender">
         <option value="">Select Gender</option>
@@ -89,22 +95,37 @@
         <option value="female">Female</option>
         <option value="other">Other</option>
     </select>
+    <input type="number" id="age" placeholder="Enter your age" required>
     <input type="number" id="weight" placeholder="Enter your weight (kg)" required>
     <input type="number" id="height" placeholder="Enter your height (cm)" required>
     <button class="btn" onclick="calculateBMI()">Calculate BMI</button>
     <div class="result" id="result"></div>
+    <div class="quote" id="quote"></div>
     <button class="reset-btn" onclick="resetFields()">Reset</button>
+    <button class="theme-switcher" onclick="toggleTheme()">Switch to Dark Theme</button>
     <div class="tip" id="tip"></div>
 </div>
 <script>
+    const motivationalQuotes = [
+        "Your body hears everything your mind says. Stay positive!",
+        "Take care of your body. It's the only place you have to live.",
+        "You don’t have to be extreme, just consistent.",
+        "Healthy does NOT mean starving yourself EVER. Healthy means eating the right food in the right amount.",
+        "A healthy outside starts from the inside."
+    ];
+    let bmiHistory = [];
     function calculateBMI() {
-        var weight = document.getElementById("weight").value;
-        var height = document.getElementById("height").value;
-        var gender = document.getElementById("gender").value;
+        const weight = document.getElementById("weight").value;
+        const height = document.getElementById("height").value;
+        const gender = document.getElementById("gender").value;
+        const age = document.getElementById("age").value;
 
-        if (weight > 0 && height > 0 && gender !== "") {
-            var bmi = (weight / ((height / 100) ** 2)).toFixed(2);
-            var resultText = "";
+        if (weight > 0 && height > 0 && gender !== "" && age > 0) {
+            const bmi = (weight / ((height / 100) ** 2)).toFixed(2);
+            bmiHistory.push(bmi);
+            if (bmiHistory.length > 5) bmiHistory.shift();
+
+            let resultText = "";
 
             if (bmi < 18.5) {
                 resultText = "Underweight";
@@ -115,32 +136,60 @@
             } else {
                 resultText = "Obese";
             }
-
             document.getElementById("result").innerHTML = `Your BMI is ${bmi} (${resultText})`;
-
-            var healthTip = "";
-            if (resultText === "Underweight") {
-                healthTip = "You might need to gain some weight. Consider a balanced diet.";
-            } else if (resultText === "Normal weight") {
-                healthTip = "Great job! Keep maintaining your current lifestyle.";
-            } else if (resultText === "Overweight") {
-                healthTip = "You might want to consider losing some weight. Exercise regularly.";
-            } else if (resultText === "Obese") {
-                healthTip = "It's advisable to seek medical guidance to reduce your weight.";
-            }
+            const healthTip = getHealthTip(resultText);
             document.getElementById("tip").innerHTML = `Health Tip: ${healthTip}`;
+
+            const randomQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+            document.getElementById("quote").innerHTML = `Motivational Quote: "${randomQuote}"`;
         } else {
             alert("Please fill in all the fields with valid values!");
         }
     }
-
     function resetFields() {
         document.getElementById("weight").value = "";
         document.getElementById("height").value = "";
         document.getElementById("gender").value = "";
+        document.getElementById("age").value = "";
         document.getElementById("result").innerHTML = "";
+        document.getElementById("quote").innerHTML = "";
         document.getElementById("tip").innerHTML = "";
     }
+    function getHealthTip(resultText) {
+        switch (resultText) {
+            case "Underweight":
+                return "You might need to gain some weight. Consider a balanced diet.";
+            case "Normal weight":
+                return "Great job! Keep maintaining your current lifestyle.";
+            case "Overweight":
+                return "You might want to consider losing some weight. Exercise regularly.";
+            case "Obese":
+                return "It's advisable to seek medical guidance to reduce your weight.";
+            default:
+                return "";
+        }
+    }
+    function toggleTheme() {
+        const body = document.body;
+        const container = document.getElementById("container");
+        const themeSwitcher = document.querySelector(".theme-switcher");
+
+        body.classList.toggle("dark-theme");
+        container.classList.toggle("dark-theme-container");
+
+        if (body.classList.contains("dark-theme")) {
+            body.style.backgroundColor = "#333";
+            container.style.backgroundColor = "#444";
+            container.style.color = "#fff";
+            themeSwitcher.textContent = "Switch to Light Theme";
+        } else {
+            body.style.backgroundColor = "#f0f8ff";
+            container.style.backgroundColor = "#fff";
+            container.style.color = "#333";
+            themeSwitcher.textContent = "Switch to Dark Theme";
+        }
+    }
 </script>
+
 </body>
 </html>
