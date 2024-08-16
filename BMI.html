@@ -6,51 +6,69 @@
     <title>BMI Calculator</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f8ff;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(to right, #ff9a9e, #fad0c4);
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
-            transition: background-color 0.3s;
+            overflow: auto;
         }
         .container {
             background-color: #fff;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 350px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            width: 340px;
+            max-width: 100%;
             text-align: center;
-            transition: background-color 0.3s, color 0.3s;
+            border: 5px dashed #007bff;
+            position: relative;
+            animation: pop 0.6s ease-out;
+            box-sizing: border-box;
+        }
+        @keyframes pop {
+            0% { transform: scale(0.5); opacity: 0.3; }
+            100% { transform: scale(1); opacity: 1; }
         }
         h2 {
-            color: #333;
+            color: #007bff;
             margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
         input[type="number"], select {
-            width: 80%;
+            width: 70%;
             padding: 10px;
             margin: 10px 0;
-            border-radius: 5px;
-            border: 1px solid #ddd;
+            border-radius: 8px;
+            border: 2px solid #ddd;
             font-size: 14px;
+            box-shadow: 0px 0px 5px rgba(0, 123, 255, 0.3);
+            transition: border 0.3s, box-shadow 0.3s;
+        }
+        input[type="number"]:focus, select:focus {
+            border-color: #007bff;
+            box-shadow: 0px 0px 8px rgba(0, 123, 255, 0.5);
+            outline: none;
         }
         .btn {
-            width: 100%;
+            width: 70%;
             padding: 10px;
             background-color: #007bff;
             color: #fff;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 16px;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
         .btn:hover {
             background-color: #0056b3;
+            transform: translateY(-3px);
         }
-        .result, .quote, .tip {
+        .result, .quote, .tip, .health-goal, .fact {
             margin-top: 20px;
             font-size: 18px;
             color: #333;
@@ -61,18 +79,14 @@
             background-color: #6c757d;
             color: #fff;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
         .reset-btn:hover {
             background-color: #5a6268;
-        }
-        footer {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #999;
+            transform: translateY(-3px);
         }
         .theme-switcher {
             margin-top: 10px;
@@ -83,6 +97,24 @@
         }
         .theme-switcher:hover {
             color: #0056b3;
+        }
+        .progress-bar {
+            margin-top: 20px;
+            background-color: #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 20px;
+        }
+        .progress-bar-inner {
+            height: 100%;
+            width: 0;
+            background-color: #007bff;
+            transition: width 1s ease;
+        }
+        footer {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #999;
         }
     </style>
 </head>
@@ -98,9 +130,20 @@
     <input type="number" id="age" placeholder="Enter your age" required>
     <input type="number" id="weight" placeholder="Enter your weight (kg)" required>
     <input type="number" id="height" placeholder="Enter your height (cm)" required>
+    <select id="goal">
+        <option value="">Select Health Goal</option>
+        <option value="gain">Gain Weight</option>
+        <option value="lose">Lose Weight</option>
+        <option value="maintain">Maintain Weight</option>
+    </select>
     <button class="btn" onclick="calculateBMI()">Calculate BMI</button>
     <div class="result" id="result"></div>
+    <div class="progress-bar">
+        <div class="progress-bar-inner" id="progress-bar-inner"></div>
+    </div>
+    <div class="health-goal" id="health-goal"></div>
     <div class="quote" id="quote"></div>
+    <div class="fact" id="fact"></div>
     <button class="reset-btn" onclick="resetFields()">Reset</button>
     <button class="theme-switcher" onclick="toggleTheme()">Switch to Dark Theme</button>
     <div class="tip" id="tip"></div>
@@ -113,20 +156,22 @@
         "Healthy does NOT mean starving yourself EVER. Healthy means eating the right food in the right amount.",
         "A healthy outside starts from the inside."
     ];
-    let bmiHistory = [];
+    const healthFacts = [
+        "Drinking water before meals can reduce appetite and calorie intake.",
+        "Regular exercise can help prevent and manage many health conditions.",
+        "Eating more fruits and vegetables can improve overall health.",
+        "Sleep is crucial for mental and physical health.",
+        "Stress management techniques can improve your quality of life."
+    ];
     function calculateBMI() {
         const weight = document.getElementById("weight").value;
         const height = document.getElementById("height").value;
         const gender = document.getElementById("gender").value;
         const age = document.getElementById("age").value;
-
-        if (weight > 0 && height > 0 && gender !== "" && age > 0) {
+        const goal = document.getElementById("goal").value;
+        if (weight > 0 && height > 0 && gender !== "" && age > 0 && goal !== "") {
             const bmi = (weight / ((height / 100) ** 2)).toFixed(2);
-            bmiHistory.push(bmi);
-            if (bmiHistory.length > 5) bmiHistory.shift();
-
             let resultText = "";
-
             if (bmi < 18.5) {
                 resultText = "Underweight";
             } else if (bmi >= 18.5 && bmi < 24.9) {
@@ -137,11 +182,15 @@
                 resultText = "Obese";
             }
             document.getElementById("result").innerHTML = `Your BMI is ${bmi} (${resultText})`;
+            updateProgressBar(bmi);
             const healthTip = getHealthTip(resultText);
             document.getElementById("tip").innerHTML = `Health Tip: ${healthTip}`;
-
+            const healthGoal = getHealthGoal(goal);
+            document.getElementById("health-goal").innerHTML = `Goal: ${healthGoal}`;
             const randomQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
             document.getElementById("quote").innerHTML = `Motivational Quote: "${randomQuote}"`;
+            const randomFact = healthFacts[Math.floor(Math.random() * healthFacts.length)];
+            document.getElementById("fact").innerHTML = `Health Fact: "${randomFact}"`;
         } else {
             alert("Please fill in all the fields with valid values!");
         }
@@ -151,12 +200,23 @@
         document.getElementById("height").value = "";
         document.getElementById("gender").value = "";
         document.getElementById("age").value = "";
+        document.getElementById("goal").value = "";
         document.getElementById("result").innerHTML = "";
         document.getElementById("quote").innerHTML = "";
         document.getElementById("tip").innerHTML = "";
+        document.getElementById("fact").innerHTML = "";
+        document.getElementById("health-goal").innerHTML = "";
+        document.getElementById("progress-bar-inner").style.width = "0";
     }
-    function getHealthTip(resultText) {
-        switch (resultText) {
+    function updateProgressBar(bmi) {
+        const progressBarInner = document.getElementById("progress-bar-inner");
+        let width = (bmi / 40) * 100;
+        if (width > 100) width = 100;
+        progressBarInner.style.width = width + "%";
+    }
+
+    function getHealthTip(bmiCategory) {
+        switch (bmiCategory) {
             case "Underweight":
                 return "You might need to gain some weight. Consider a balanced diet.";
             case "Normal weight":
@@ -169,27 +229,31 @@
                 return "";
         }
     }
+    function getHealthGoal(goal) {
+        switch (goal) {
+            case "gain":
+                return "Focus on gaining weight through a healthy diet and strength training.";
+            case "lose":
+                return "Focus on losing weight through a balanced diet and regular cardio.";
+            case "maintain":
+                return "Keep up your current routine to maintain your weight.";
+            default:
+                return "";
+        }
+    }
     function toggleTheme() {
-        const body = document.body;
         const container = document.getElementById("container");
         const themeSwitcher = document.querySelector(".theme-switcher");
-
-        body.classList.toggle("dark-theme");
-        container.classList.toggle("dark-theme-container");
-
-        if (body.classList.contains("dark-theme")) {
-            body.style.backgroundColor = "#333";
-            container.style.backgroundColor = "#444";
-            container.style.color = "#fff";
-            themeSwitcher.textContent = "Switch to Light Theme";
-        } else {
-            body.style.backgroundColor = "#f0f8ff";
+        if (container.style.backgroundColor === "black") {
             container.style.backgroundColor = "#fff";
             container.style.color = "#333";
-            themeSwitcher.textContent = "Switch to Dark Theme";
+            themeSwitcher.innerHTML = "Switch to Dark Theme";
+        } else {
+            container.style.backgroundColor = "black";
+            container.style.color = "white";
+            themeSwitcher.innerHTML = "Switch to Light Theme";
         }
     }
 </script>
-
 </body>
 </html>
